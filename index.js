@@ -142,11 +142,11 @@ function getExpendHandler(intent, session, callback) {
 
     request(options, function (error, response, body) {
         if (error) {
-            console.error('Could not connect: Error Message: ' + error.message);
+            console.error('Failed to connect when attempting GETEXPENDONDATE_INTENT, error: ' + error.message);
             callback(error);
         } else {
             // writing the full body to the console so we can see what we got back
-            console.log('Made request, body: ' + body);
+            console.log('Ccompleted request, body: ' + body);
 
             // basic test that we dont ice the body
             if (body == null) {
@@ -161,7 +161,6 @@ function getExpendHandler(intent, session, callback) {
                 buildSpeechletResponse(title, output, '', true));
         }
     });
-
 }
 
 function setGoalHandler(intent, session, callback) {
@@ -171,7 +170,37 @@ function setGoalHandler(intent, session, callback) {
 
 function getProximToGoalHandler(intent, session, callback) {
     // handles the PROXIMTOGOAL_INTENT
+    
+    // configuring options for the request call
+    var options = {
+        url: SERVER_URL + '' , //ADD PAGE HERE
+        method: '', // ADD REQUEST TYPE HERE
+        headers: {},
+        body: '',
+        qs: {}   
+    };
 
+    request(options, function (error, response, body) {
+        if (error) {
+            console.error('Failed to connect when attempting PROXIMTOGOAL_INTENT, error:' + error.message);
+            callback(error);
+        } else {
+            // writing the full body to the console so we can see what we got back
+            console.log('Completed request, body: ' + body);
+
+            // basic test that we dont ice the body
+            if (body == null) {
+                body = 0;
+            }
+
+            // creating the response 
+            var sessionAttributes = {};
+            var title = 'Daily Expenses for: ' + date.toGMTString();
+            var output = generateExpendStatement(body, date);
+            callback(sessionAttributes, 
+                buildSpeechletResponse(title, output, '', true));
+        }
+    });
 }
 
 function setNewRoutineHandler(intent, session, callback) {
