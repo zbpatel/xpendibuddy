@@ -15,7 +15,7 @@ var _ = require('underscore');
 
 // the URL of the server we query for the data
 // production url: 'http://7879f2c7.ngrok.io/spending-date'
-var SERVER_URL = 'http://localhost:5000/';
+var SERVER_URL = 'http://607282d5.ngrok.io';
 
 // --------------- Helpers that build all of the responses -----------------------
 
@@ -100,7 +100,7 @@ function generateExpendStatement(expend, date) {
     // Returns a short statement summarizing the user's expenditures on a certain date
     var d = stripDate(date);
     console.log(d);
-    var dString = d[0] + ' ' + d[1] + ", " + d[2];
+    var dString = d[0] + ' ' + d[1] + ' ' + d[2] + ', ' + d[3];
 
     expend = '$' + expend.toString();
 
@@ -114,9 +114,10 @@ var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'A
 function stripDate(date) {
     // strips a date in ISO 8086 to Month / Day / Year
     var m = months[date.getUTCMonth()];
-    var d = weekdays[date.getUTCDay()];
+    var w = weekdays[date.getUTCDay()];
+    var d = date.getUTCDate();
     var y = date.getUTCFullYear();
-    return [m, d, y]
+    return [w, m, d, y]
 }
 // ----- END DATE / EXPENDITURE HELPER METHODS -----
 
@@ -130,12 +131,12 @@ function getExpendHandler(intent, session, callback) {
 
     // configuring options for the request call
     var options = {
-        url: SERVER_URL,
-        method: 'GET',
+        url: SERVER_URL + "/spending-date",
+        method: 'POST',
         headers: {},
         body: '',
         qs: {
-            'date':date
+            'ds':date
         }   
     };
 
@@ -145,7 +146,7 @@ function getExpendHandler(intent, session, callback) {
             callback(error);
         } else {
             // writing the full body to the console so we can see what we got back
-            console.log('Made request, body: ' + str(body));
+            console.log('Made request, body: ' + body);
 
             // basic test that we dont ice the body
             if (body == null) {
@@ -157,7 +158,7 @@ function getExpendHandler(intent, session, callback) {
             var title = 'Daily Expenses for: ' + date.toGMTString();
             var output = generateExpendStatement(body, date);
             callback(sessionAttributes, 
-                buildSpeechletResponse(title, output, '', True));
+                buildSpeechletResponse(title, output, '', true));
         }
     });
 
