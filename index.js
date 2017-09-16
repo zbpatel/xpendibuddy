@@ -12,6 +12,11 @@ var request = require('request');
 
 // Underscore 
 var _ = require('underscore');
+
+// the URL of the server we query for the data
+// production url: 'http://7879f2c7.ngrok.io/spending-date'
+var SERVER_URL = 'http://localhost:5000/';
+
 // --------------- Helpers that build all of the responses -----------------------
 
 function buildSpeechletResponse(title, output, repromptText, shouldEndSession) {
@@ -43,6 +48,27 @@ function buildResponse(sessionAttributes, speechletResponse) {
     };
 }
 
+// initial method to make a web query 
+function makeRequest(rUrl=SERVER_URL, rMethod, rHeaders= {}, rQs={}, rBody={}) {
+    var options = {
+        url: rUrl,
+        method: rethod,
+        headers: rHeaders,
+        body: rBody, // add body if necessary
+        qs: rQs // add query strings   
+    };
+    request(options, function (error, response, body) {
+        if (error) {
+            console.error('Could not connect ' + error.message);
+            callback(error);
+        } else {
+            // writing the full body to the console so we can see what we got back
+            console.log('Made request, body: ' + str(body));
+        }
+    });
+}
+
+
 
 // --------------- Functions that control the skill's behavior -----------------------
 
@@ -60,7 +86,7 @@ function getWelcomeResponse(callback) {
         buildSpeechletResponse(cardTitle, speechOutput, repromptText, shouldEndSession));
 }
 
-function handleSessionEndRequest(callback) {
+function handleSessionEndRequest(intent, session, callback) {
     const cardTitle = 'Session Ended';
     // don't want any speech input when ending the skill
     const speechOutput = '';
@@ -70,21 +96,53 @@ function handleSessionEndRequest(callback) {
     callback({}, buildSpeechletResponse(cardTitle, speechOutput, null, shouldEndSession));
 }
 
+function generateExpendStatement(expend, date) {
+    var d = stripDate(date);
+    console.log(d);
+    var dString = d[0] + ' ' + d[1] + ", " + d[2];
+
+    expend = '$' + expend.toString();
+
+    return 'On ' + dString  + ' you spent ' + expend + '.';
+}
+
+// date constants for the strip date method
+// This is because the crappy built in JS date class doesn't give the full names of anything... :/
+var weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+function stripDate(date) {
+    // strips a date in ISO 8086 to Month / Day / Year
+    var m = months[date.getMonth()];
+    var d = weekdays[date.getDay()];
+    var y = date.getFullYear();
+    return [m, d, y]
+}
+
 // APP SPECIFIC EVENT HANDLERS:
-function getExpendHandler(callback) {
+function getExpendHandler(intent, session, callback) {
     // handles the GETEXPENDONDATE_INTENT
+
+    // grabbing the date from the intent
+    // TODO: add better error checking here
+    var date = intent.slots.date.value;
+
+    makeRequest(rMethod='GET', rQs={date});
+
 }
 
-function setGoalHandler(callback) {
+function setGoalHandler(intent, session, callback) {
     // handles the SETGOAL_INTENT
+
 }
 
-function getProximToGoalHandler(callback) {
+function getProximToGoalHandler(intent, session, callback) {
     // handles the PROXIMTOGOAL_INTENT
+
 }
 
-function setNewRoutineHandler(callback) {
+function setNewRoutineHandler(intent, session, callback) {
     // handles the SUGGESTNEWROUTINE_INTENT
+
 }
 
 // --------------- Events -----------------------
@@ -117,13 +175,13 @@ function onIntent(intentRequest, session, callback) {
 
     // calls handlers for the various intents
     if (intentName == 'GETEXPENDONDATE_INTENT') {
-        getExpendHandler(callback);
+        getExpendHandler(intent, session, callback);
     } else if (intentName == 'SETGOAL_INTENT') {
-        setGoalHandler(callback);
+        setGoalHandler(intent, session, callback);
     } else if (intentName == 'PROXIMTOGOAL_INTENT') {
-        getProximToGoalHandler(callback);
+        getProximToGoalHandler(intent, session, callback);
     } else if (intentName == 'SUGGESTNEWROUTINE_INTENT') {
-        setNewRoutineHandler(callback);
+        setNewRoutineHandler(intent, session, callback);
     } else if (intentName === 'AMAZON.HelpIntent') {
         getWelcomeResponse(callback);
     } else if (intentName === 'AMAZON.StopIntent' || intentName === 'AMAZON.CancelIntent') {
@@ -139,7 +197,7 @@ function onIntent(intentRequest, session, callback) {
  */
 function onSessionEnded(sessionEndedRequest, session) {
     console.log(`onSessionEnded requestId=${sessionEndedRequest.requestId}, sessionId=${session.sessionId}`);
-    // Add cleanup logic here
+    // Add cleanup logic here (only if necessary)
 }
 
 
@@ -150,17 +208,10 @@ function onSessionEnded(sessionEndedRequest, session) {
 exports.handler = (event, context, callback) => {
     try {
         console.log(`event.session.application.applicationId=${event.session.application.applicationId}`);
-
-        /**
-         * Uncomment this if statement and populate with your skill's application ID to
-         * prevent someone else from configuring a skill that sends requests to this function.
-         */
-        /*
-        if (event.session.application.applicationId !== 'amzn1.echo-sdk-ams.app.[unique-value-here]') {
+        if (event.session.application.applicationId !== 'amzn1.ask.skill.14f41b07-4beb-4392-b225-0af056feba8b') {
              callback('Invalid Application ID');
         }
-        */
-
+        
         if (event.session.new) {
             onSessionStarted({ requestId: event.request.requestId }, event.session);
         }
