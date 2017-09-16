@@ -1,0 +1,30 @@
+{
+  "name": "xpendibuddy",
+  "version": "1.0.0",
+  "description": "An Alexa skill for Hack Into It 2017",
+  "main": "index.js",
+  "dependencies": {
+    "async": "^2.4.1",
+    "aws-sdk": "^2.77.0",
+    "request": "^2.81.0",
+    "underscore": "^1.8.3"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zbpatel/xpendibuddy"
+  },
+  "keywords": [
+    "Alexa",
+    "Xpendibuddy"
+  ],
+  "author": "Zac Patel",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/zbpatel/xpendibuddy/issues"
+  },
+  "homepage": "https://github.com/zbpatel/xpendibuddy#readme"
+}
