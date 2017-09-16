@@ -48,7 +48,7 @@ function buildResponse(sessionAttributes, speechletResponse) {
     };
 }
 
-// initial method to make a web query 
+// Generalized web query method -> TODO: implement this if time available
 function makeRequest(rUrl=SERVER_URL, rMethod, rHeader, rBody, rQs, cback) {
     var options = {
         url: rUrl,
@@ -140,6 +140,7 @@ function getExpendHandler(intent, session, callback) {
         }   
     };
 
+    // making the https call to the server
     request(options, function (error, response, body) {
         if (error) {
             console.error('Failed to connect when attempting GETEXPENDONDATE_INTENT, error: ' + error.message);
@@ -180,6 +181,7 @@ function getProximToGoalHandler(intent, session, callback) {
         qs: {}   
     };
 
+    // making the https call to our server
     request(options, function (error, response, body) {
         if (error) {
             console.error('Failed to connect when attempting PROXIMTOGOAL_INTENT, error:' + error.message);
@@ -195,8 +197,8 @@ function getProximToGoalHandler(intent, session, callback) {
 
             // creating the response 
             var sessionAttributes = {};
-            var title = 'Daily Expenses for: ' + date.toGMTString();
-            var output = generateExpendStatement(body, date);
+            var title = '';
+            var output = '';
             callback(sessionAttributes, 
                 buildSpeechletResponse(title, output, '', true));
         }
@@ -204,9 +206,44 @@ function getProximToGoalHandler(intent, session, callback) {
 }
 
 function setNewRoutineHandler(intent, session, callback) {
-    // handles the SUGGESTNEWROUTINE_INTENT
 
 }
+
+function getDailySummaryHandler(intent, session, callback) {
+    // handles the PROXIMTOGOAL_INTENT
+    
+    // configuring options for the request call
+    var options = {
+        url: SERVER_URL + '/daily-update' , 
+        method: 'GET', 
+        headers: {},
+        body: '',
+        qs: {}   
+    };
+
+    // making the https call to our server
+    request(options, function (error, response, body) {
+        if (error) {
+            console.error('Failed to connect when attempting DAILY UPDATE, error:' + error.message);
+            callback(error);
+        } else {
+            // writing the full body to the console so we can see what we got back
+            console.log('Completed request, body: ' + body);
+            // basic test that we dont ice the body
+            if (body == null) {
+                body = 0;
+            }
+
+            // creating the response 
+            var sessionAttributes = {};
+            var title = 'Daily Expense Summary';
+            var output = body;
+            callback(sessionAttributes, 
+                buildSpeechletResponse(title, output, '', true));
+        }
+    });
+}
+
 // ----- END APP SPECIFIC EVENT HANDLERS: -----
 
 // --------------- Events -----------------------
@@ -246,6 +283,8 @@ function onIntent(intentRequest, session, callback) {
         getProximToGoalHandler(intent, session, callback);
     } else if (intentName == 'SUGGESTNEWROUTINE_INTENT') {
         setNewRoutineHandler(intent, session, callback);
+    } else if (intentName == 'GETDAILYSUMMARY_INTENT') {
+        getDailySummaryHandler(intent, session, callback);
     } else if (intentName === 'AMAZON.HelpIntent') {
         getWelcomeResponse(callback);
     } else if (intentName === 'AMAZON.StopIntent' || intentName === 'AMAZON.CancelIntent') {
