@@ -70,6 +70,23 @@ function handleSessionEndRequest(callback) {
     callback({}, buildSpeechletResponse(cardTitle, speechOutput, null, shouldEndSession));
 }
 
+// APP SPECIFIC EVENT HANDLERS:
+function getExpendHandler(callback) {
+    // handles the GETEXPENDONDATE_INTENT
+}
+
+function setGoalHandler(callback) {
+    // handles the SETGOAL_INTENT
+}
+
+function getProximToGoalHandler(callback) {
+    // handles the PROXIMTOGOAL_INTENT
+}
+
+function setNewRoutineHandler(callback) {
+    // handles the SUGGESTNEWROUTINE_INTENT
+}
+
 // --------------- Events -----------------------
 
 /**
@@ -98,9 +115,16 @@ function onIntent(intentRequest, session, callback) {
     const intent = intentRequest.intent;
     const intentName = intentRequest.intent.name;
 
-    // Dispatch to your skill's intent handlers
-    // Add handlers for your different events now
-    if (intentName === 'AMAZON.HelpIntent') {
+    // calls handlers for the various intents
+    if (intentName == 'GETEXPENDONDATE_INTENT') {
+        getExpendHandler(callback);
+    } else if (intentName == 'SETGOAL_INTENT') {
+        setGoalHandler(callback);
+    } else if (intentName == 'PROXIMTOGOAL_INTENT') {
+        getProximToGoalHandler(callback);
+    } else if (intentName == 'SUGGESTNEWROUTINE_INTENT') {
+        setNewRoutineHandler(callback);
+    } else if (intentName === 'AMAZON.HelpIntent') {
         getWelcomeResponse(callback);
     } else if (intentName === 'AMAZON.StopIntent' || intentName === 'AMAZON.CancelIntent') {
         handleSessionEndRequest(callback);
