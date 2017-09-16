@@ -49,7 +49,7 @@ function buildResponse(sessionAttributes, speechletResponse) {
 }
 
 // initial method to make a web query 
-function makeRequest(rUrl=SERVER_URL, rMethod, rHeaders= {}, rQs={}, rBody={}) {
+function makeRequest(rUrl=SERVER_URL, rMethod, rHeader, rBody, rQs, cback) {
     var options = {
         url: rUrl,
         method: rethod,
@@ -59,7 +59,7 @@ function makeRequest(rUrl=SERVER_URL, rMethod, rHeaders= {}, rQs={}, rBody={}) {
     };
     request(options, function (error, response, body) {
         if (error) {
-            console.error('Could not connect ' + error.message);
+            console.error('Could not connect: Error Message: ' + error.message);
             callback(error);
         } else {
             // writing the full body to the console so we can see what we got back
@@ -67,7 +67,6 @@ function makeRequest(rUrl=SERVER_URL, rMethod, rHeaders= {}, rQs={}, rBody={}) {
         }
     });
 }
-
 
 
 // --------------- Functions that control the skill's behavior -----------------------
@@ -96,7 +95,9 @@ function handleSessionEndRequest(intent, session, callback) {
     callback({}, buildSpeechletResponse(cardTitle, speechOutput, null, shouldEndSession));
 }
 
+// ----- START DATE / EXPENDITURE HELPER METHODS -----
 function generateExpendStatement(expend, date) {
+    // Returns a short statement summarizing the user's expenditures on a certain date
     var d = stripDate(date);
     console.log(d);
     var dString = d[0] + ' ' + d[1] + ", " + d[2];
@@ -112,21 +113,53 @@ var weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'
 var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 function stripDate(date) {
     // strips a date in ISO 8086 to Month / Day / Year
-    var m = months[date.getMonth()];
-    var d = weekdays[date.getDay()];
-    var y = date.getFullYear();
+    var m = months[date.getUTCMonth()];
+    var d = weekdays[date.getUTCDay()];
+    var y = date.getUTCFullYear();
     return [m, d, y]
 }
+// ----- END DATE / EXPENDITURE HELPER METHODS -----
 
-// APP SPECIFIC EVENT HANDLERS:
+// ----- APP SPECIFIC EVENT HANDLERS: -----
 function getExpendHandler(intent, session, callback) {
     // handles the GETEXPENDONDATE_INTENT
 
     // grabbing the date from the intent
-    // TODO: add better error checking here
-    var date = intent.slots.date.value;
+    // TODO: add production quality error handling here
+    var date = new Date(intent.slots.date.value);
 
-    makeRequest(rMethod='GET', rQs={date});
+    // configuring options for the request call
+    var options = {
+        url: SERVER_URL,
+        method: 'GET',
+        headers: {},
+        body: '',
+        qs: {
+            'date':date
+        }   
+    };
+
+    request(options, function (error, response, body) {
+        if (error) {
+            console.error('Could not connect: Error Message: ' + error.message);
+            callback(error);
+        } else {
+            // writing the full body to the console so we can see what we got back
+            console.log('Made request, body: ' + str(body));
+
+            // basic test that we dont ice the body
+            if (body == null) {
+                body = 0;
+            }
+
+            // creating the response 
+            var sessionAttributes = {};
+            var title = 'Daily Expenses for: ' + date.toGMTString();
+            var output = generateExpendStatement(body, date);
+            callback(sessionAttributes, 
+                buildSpeechletResponse(title, output, '', True));
+        }
+    });
 
 }
 
@@ -144,6 +177,7 @@ function setNewRoutineHandler(intent, session, callback) {
     // handles the SUGGESTNEWROUTINE_INTENT
 
 }
+// ----- END APP SPECIFIC EVENT HANDLERS: -----
 
 // --------------- Events -----------------------
 
